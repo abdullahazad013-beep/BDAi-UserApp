@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.BDAi" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#c96e3f</item>
+        <item name="android:windowBackground">#faf8f6</item>
+        <item name="android:statusBarColor">#c96e3f</item>
+    </style>
+</resources>

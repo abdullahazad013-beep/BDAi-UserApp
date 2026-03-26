@@ -1,0 +1,53 @@
+name: Build BDAi APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Download Gradle Wrapper JAR
+        run: |
+          curl -sLo gradle/wrapper/gradle-wrapper.jar \
+            "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar"
+          chmod +x gradlew
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Set date
+        run: echo "DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/BDAi-${{ env.DATE }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BDAi-${{ env.DATE }}
+          path: app/build/outputs/apk/release/BDAi-*.apk
+          retention-days: 30
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.DATE }}
+          name: BDAi App v${{ env.DATE }}
+          files: app/build/outputs/apk/release/BDAi-*.apk
+          body: "BDAi By Azad | v${{ env.DATE }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

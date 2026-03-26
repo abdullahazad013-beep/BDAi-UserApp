@@ -1,0 +1,3 @@
+-keep class com.bdai.azad.** { *; }
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**

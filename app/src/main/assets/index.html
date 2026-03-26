@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BDAi</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --acc:#c96e3f;--acc2:#e8895a;--acc3:#a85530;
+  --bg:#fff;--bg2:#f7f7f8;--sur:#f2f2f3;--sur2:#e8e8ea;
+  --bdr:#e5e5e5;--txt:#0d0d0d;--mut:#8e8ea0;--mut2:#c5c5d2;
+  --red:#ef4146;--green:#10a37f;
+  --font:'Noto Sans Bengali',sans-serif;--sora:'Sora',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;font-family:var(--font);background:var(--bg);overflow:hidden}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+@keyframes mup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes dot{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-5px);opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* APP */
+.app{display:flex;flex-direction:column;height:100vh;width:100%;background:var(--bg)}
+
+/* Topbar — ChatGPT style */
+.tb{height:52px;background:var(--bg);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;flex-shrink:0;position:relative}
+.tb-ic{background:none;border:none;font-size:22px;color:var(--mut);cursor:pointer;padding:6px;border-radius:8px;line-height:1;transition:background .15s}
+.tb-ic:active{background:var(--sur)}
+.tb-name{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--sora);font-size:15px;font-weight:800;color:var(--txt);white-space:nowrap}
+.tb-name span{color:var(--acc)}
+
+/* Chat area */
+.chat{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+
+/* Welcome — ChatGPT style: just logo + name center */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;animation:mup .4s ease}
+.wlc-av{width:72px;height:72px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 4px 20px rgba(201,110,63,.25);overflow:hidden}
+.wlc-av img{width:100%;height:100%;object-fit:cover}
+.wlc-t{font-family:var(--sora);font-size:24px;font-weight:800;color:var(--txt);margin-bottom:6px}
+.wlc-s{font-size:13.5px;color:var(--mut);text-align:center;line-height:1.8}
+
+/* Messages */
+.msgs{padding:16px 14px 8px}
+
+/* User bubble */
+.mu{display:flex;justify-content:flex-end;margin-bottom:22px;animation:mup .2s ease}
+.mu-bub{background:var(--sur);border-radius:18px 18px 4px 18px;padding:12px 16px;font-size:14px;line-height:1.8;color:var(--txt);max-width:82%;word-break:break-word}
+
+/* AI message */
+.ma{display:flex;gap:10px;align-items:flex-start;margin-bottom:22px;animation:mup .2s ease}
+.ma-av{width:30px;height:30px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;overflow:hidden}
+.ma-av img{width:100%;height:100%;object-fit:cover}
+.ma-body{flex:1;min-width:0}
+.ma-name{font-size:10.5px;font-weight:700;color:var(--mut);margin-bottom:7px;font-family:var(--sora);letter-spacing:.3px}
+.ma-txt{font-size:14px;line-height:1.85;color:var(--txt);word-break:break-word}
+.ma-txt p{margin-bottom:10px}.ma-txt p:last-child{margin-bottom:0}
+.ma-txt pre{background:#1e1e2e;color:#cdd6f4;border-radius:12px;padding:14px;font-size:12px;font-family:monospace;overflow-x:auto;margin:10px 0;line-height:1.7}
+.ma-txt code{background:var(--sur2);padding:2px 6px;border-radius:5px;font-family:monospace;font-size:12.5px;color:#a85530}
+.ma-txt strong{font-weight:700}
+.ma-txt h3{font-size:15px;font-weight:700;margin:10px 0 5px}
+.ma-txt ul,.ma-txt ol{margin:6px 0 6px 18px}.ma-txt li{margin-bottom:4px;line-height:1.7}
+.ma-acts{display:flex;gap:4px;margin-top:10px;opacity:0;transition:opacity .3s}
+.ma-acts.show{opacity:1}
+.act{background:none;border:1px solid var(--bdr);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--mut);cursor:pointer;font-family:var(--font)}
+.act:active{background:var(--sur)}
+
+/* Typing */
+.tdots{display:flex;gap:5px;align-items:center;padding:4px 0}
+.td{width:7px;height:7px;border-radius:50%;background:var(--mut2);animation:dot .9s ease infinite}
+.td:nth-child(2){animation-delay:.18s}.td:nth-child(3){animation-delay:.36s}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--acc);vertical-align:text-bottom;animation:blink .7s ease infinite;margin-left:1px}
+
+/* INPUT AREA */
+.inp-wrap{flex-shrink:0;padding:8px 14px 14px;background:var(--bg);position:relative}
+
+/* + Menu */
+.plus-menu{position:absolute;bottom:80px;left:14px;right:14px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:16px;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.1);display:none;z-index:50;animation:slideUp .2s ease}
+.plus-menu.open{display:block}
+.pm-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;cursor:pointer;border:none;background:none;width:100%;font-family:var(--font);color:var(--txt);text-align:left}
+.pm-item:active{background:var(--sur)}
+.pm-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pm-t{font-size:13.5px;font-weight:600}.pm-d{font-size:10.5px;color:var(--mut);margin-top:2px}
+.pm-hr{height:1px;background:var(--bdr);margin:4px 0}
+
+/* Input box */
+.inp-box{background:var(--bg);border:1.5px solid var(--bdr);border-radius:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.inp-box:focus-within{border-color:var(--acc)}
+.inp-row{display:flex;align-items:flex-end;padding:8px 10px 6px;gap:6px}
+.plus-btn{width:36px;height:36px;border-radius:10px;background:var(--sur);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;font-weight:300;color:var(--mut);flex-shrink:0;line-height:1;transition:all .2s}
+.plus-btn:active{background:var(--sur2)}
+.plus-btn.on{transform:rotate(45deg);background:#fdf0e8;color:var(--acc)}
+.chatx{flex:1;background:none;border:none;outline:none;font-family:var(--font);font-size:14.5px;min-height:38px;max-height:130px;overflow-y:auto;line-height:1.65;color:var(--txt);resize:none;padding-top:3px}
+.chatx::placeholder{color:var(--mut2)}
+.sbtn{width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:0 2px 8px rgba(201,110,63,.35)}
+.sbtn:active{background:var(--acc3);transform:scale(.9)}
+.sbtn:disabled{background:var(--sur2);box-shadow:none;cursor:not-allowed}
+.inp-hint{text-align:center;font-size:10px;color:var(--mut2);margin-top:7px}
+
+/* Feature Screens (slide up) */
+.fs{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s ease}
+.fs.open{transform:translateY(0)}
+.fs-head{height:52px;background:var(--bg);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0}
+.fs-back{background:none;border:none;font-size:22px;cursor:pointer;color:var(--mut);padding:6px;border-radius:8px;line-height:1}
+.fs-back:active{background:var(--sur)}
+.fs-title{font-family:var(--sora);font-size:15px;font-weight:700}
+.fs-body{flex:1;overflow-y:auto;padding:16px}
+.fsec{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:12px}
+.fst{font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.finp{width:100%;border:1.5px solid var(--bdr);border-radius:10px;padding:11px 13px;font-family:var(--font);font-size:14px;color:var(--txt);outline:none;background:var(--bg);margin-bottom:10px;transition:border-color .2s}
+.finp:focus{border-color:var(--acc)}
+textarea.finp{resize:none;min-height:80px;line-height:1.65}
+select.finp{cursor:pointer}
+.gbtn{width:100%;padding:13px;background:var(--acc);border:none;border-radius:12px;font-family:var(--font);font-size:14.5px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s}
+.gbtn:active{background:var(--acc3)}
+.gbtn:disabled{background:var(--sur2);cursor:not-allowed}
+
+/* Image grid */
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ic{aspect-ratio:1;border-radius:12px;background:var(--sur);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;transition:all .2s}
+.ic:active{transform:scale(.97)}
+.ic img{width:100%;height:100%;object-fit:cover}
+.ldots{display:flex;gap:4px;align-items:center}
+.sd{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:dot .8s ease infinite}
+.sd:nth-child(2){animation-delay:.15s}.sd:nth-child(3){animation-delay:.3s}
+
+/* Code output */
+.code-out{background:#1e1e2e;color:#cdd6f4;border-radius:12px;padding:14px;font-size:12px;font-family:monospace;overflow:auto;max-height:400px;line-height:1.7;margin-top:8px;white-space:pre-wrap;word-break:break-all}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(8px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:12.5px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Loading screen */
+.loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999}
+.loading-av{width:80px;height:80px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 4px 24px rgba(201,110,63,.3);overflow:hidden}
+.loading-av img{width:100%;height:100%;object-fit:cover}
+.loading-name{font-family:var(--sora);font-size:22px;font-weight:800;margin-bottom:8px}
+.loading-name span{color:var(--acc)}
+.loading-sub{font-size:13px;color:var(--mut);margin-bottom:30px}
+.loading-bar{width:200px;height:4px;background:var(--sur2);border-radius:4px;overflow:hidden}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0%;transition:width .3s;border-radius:4px}
+
+
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div class="loading" id="loading">
+  <div class="loading-av">
+    <img src="logo.png" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:36px;font-weight:900;color:#fff;font-family:serif>B</span>'">
+  </div>
+  <div class="loading-name">BDAi <span>By Azad</span></div>
+  <div class="loading-sub">বাংলাদেশের নিজস্ব AI</div>
+  <div class="loading-bar"><div class="loading-fill" id="lf"></div></div>
+</div>
+
+
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Main App -->
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- Topbar -->
+  <div class="tb">
+    <button class="tb-ic" onclick="showHistory()">&#9776;</button>
+    <div class="tb-name">BDAi <span>By Azad</span></div>
+    <button class="tb-ic" style="margin-left:auto" onclick="newChat()">&#9998;</button>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat" id="chat">
+    <div class="welcome" id="wlc">
+      <div class="wlc-av">
+        <img src="logo.png" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:38px;font-weight:900;color:#fff;font-family:serif>B</span>'">
+      </div>
+      <div class="wlc-t">BDAi</div>
+      <div class="wlc-s">বাংলাদেশের নিজস্ব AI &#127991;<br>যেকোনো প্রশ্ন করুন</div>
+    </div>
+    <div id="msgs"></div>
+  </div>
+
+  <!-- Input -->
+  <div class="inp-wrap">
+    <!-- Plus Menu -->
+    <div class="plus-menu" id="pmenu">
+      <button class="pm-item" onclick="openFS('img')">
+        <div class="pm-ic" style="background:#fff3e0">&#127912;</div>
+        <div><div class="pm-t">ছবি তৈরি</div><div class="pm-d">AI Image Generation</div></div>
+      </button>
+      <button class="pm-item" onclick="openFS('code')">
+        <div class="pm-ic" style="background:#e8f5e9">&#128187;</div>
+        <div><div class="pm-t">কোড লেখো</div><div class="pm-d">WP, PHP, Python, React...</div></div>
+      </button>
+      <button class="pm-item" onclick="openFS('video')">
+        <div class="pm-ic" style="background:#fce4ec">&#127916;</div>
+        <div><div class="pm-t">ভিডিও তৈরি</div><div class="pm-d">AI Video Generation</div></div>
+      </button>
+      <div class="pm-hr"></div>
+      <button class="pm-item" onclick="startVoice()">
+        <div class="pm-ic" style="background:#e3f2fd">&#127908;</div>
+        <div><div class="pm-t">Voice Input</div><div class="pm-d">বাংলায় কথা বলুন</div></div>
+      </button>
+      <button class="pm-item" onclick="pickFile()">
+        <div class="pm-ic" style="background:#f3e5f5">&#128196;</div>
+        <div><div class="pm-t">ফাইল</div><div class="pm-d">PDF, Excel, Word</div></div>
+      </button>
+      <button class="pm-item" onclick="openFS('translate')">
+        <div class="pm-ic" style="background:#e8f5e9">&#128483;</div>
+        <div><div class="pm-t">অনুবাদ</div><div class="pm-d">যেকোনো ভাষা</div></div>
+      </button>
+      <button class="pm-item" onclick="openFS('write')">
+        <div class="pm-ic" style="background:#fff8e1">&#9997;</div>
+        <div><div class="pm-t">Writing</div><div class="pm-d">Blog, CV, Email, Story</div></div>
+      </button>
+    </div>
+
+    <div class="inp-box">
+      <div class="inp-row">
+        <button class="plus-btn" id="pbtn" onclick="toggleP()">+</button>
+        <textarea class="chatx" id="ci" rows="1" placeholder="BDAi কে যেকোনো প্রশ্ন করুন..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
+          oninput="autoH(this);closeP()"></textarea>
+        <button class="sbtn" id="sbtn" onclick="send()">&#10148;</button>
+      </div>
+    </div>
+    <div class="inp-hint">BDAi ভুল করতে পারে — গুরুত্বপূর্ণ তথ্য যাচাই করুন</div>
+  </div>
+</div>
+
+<!-- IMAGE SCREEN -->
+<div class="fs" id="fs-img">
+  <div class="fs-head">
+    <button class="fs-back" onclick="closeFS('img')">&#8592;</button>
+    <div class="fs-title">&#127912; ছবি তৈরি</div>
+  </div>
+  <div class="fs-body">
+    <div class="fsec">
+      <div class="fst">বর্ণনা লিখুন</div>
+      <textarea class="finp" id="ip" placeholder="যেমন: বাংলাদেশের নদীতে সূর্যাস্ত, নৌকা, 4K realistic" rows="3"></textarea>
+      <select class="finp" id="is">
+        <option value="flux">&#10024; Flux (সেরা মান)</option>
+        <option value="turbo">&#9889; Turbo (দ্রুত)</option>
+        <option value="realistic">&#128247; Realistic</option>
+        <option value="anime">&#127800; Anime</option>
+        <option value="sdxl">&#127919; SDXL</option>
+        <option value="dreamshaper">&#127917; DreamShaper</option>
+        <option value="midjourney">&#128444; Midjourney</option>
+        <option value="flux-pro">&#11088; Flux Pro</option>
+      </select>
+      <select class="finp" id="isz">
+        <option value="512,512">1:1 Square (512x512)</option>
+        <option value="768,432">16:9 Landscape</option>
+        <option value="432,768">9:16 Portrait</option>
+        <option value="1024,1024">HD Square (1024x1024)</option>
+      </select>
+      <button class="gbtn" id="ibtn" onclick="genImg()">&#127912; ৪টি ছবি তৈরি করুন</button>
+    </div>
+    <div class="ig" id="ig">
+      <div class="ic">&#127912;</div><div class="ic">&#10024;</div>
+      <div class="ic">&#128444;</div><div class="ic">&#128247;</div>
+    </div>
+  </div>
+</div>
+
+<!-- CODE SCREEN -->
+<div class="fs" id="fs-code">
+  <div class="fs-head">
+    <button class="fs-back" onclick="closeFS('code')">&#8592;</button>
+    <div class="fs-title">&#128187; কোড তৈরি</div>
+  </div>
+  <div class="fs-body">
+    <div class="fsec">
+      <div class="fst">কোডের ধরন</div>
+      <select class="finp" id="ct">
+        <option value="wp_theme">&#127912; WordPress Theme</option>
+        <option value="wp_plugin">&#128268; WordPress Plugin</option>
+        <option value="php">&#128024; PHP</option>
+        <option value="python">&#128013; Python</option>
+        <option value="javascript">&#9889; JavaScript</option>
+        <option value="react">&#8981; React</option>
+        <option value="flutter">&#128241; Flutter</option>
+        <option value="android">&#129302; Android/Kotlin</option>
+        <option value="sql">&#128451; SQL</option>
+        <option value="api">&#127760; REST API</option>
+        <option value="html_css">&#127760; HTML/CSS</option>
+      </select>
+      <textarea class="finp" id="cp" placeholder="বিস্তারিত বর্ণনা দিন..." rows="5"></textarea>
+      <button class="gbtn" id="cbtn" onclick="genCode()">&#9889; কোড তৈরি করুন</button>
+    </div>
+    <div id="cr" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">Output</span>
+        <button onclick="cpCode()" style="padding:5px 12px;background:#fdf0e8;border:1px solid #f0c9a8;border-radius:8px;font-size:11px;color:var(--acc);cursor:pointer;font-family:var(--font)">&#128203; কপি</button>
+      </div>
+      <pre class="code-out" id="co"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO SCREEN -->
+<div class="fs" id="fs-video">
+  <div class="fs-head">
+    <button class="fs-back" onclick="closeFS('video')">&#8592;</button>
+    <div class="fs-title">&#127916; ভিডিও তৈরি</div>
+  </div>
+  <div class="fs-body">
+    <div class="fsec">
+      <div style="background:#fff3e0;border:1px solid #f0c9a8;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--acc)">&#9888; তৈরিতে ৩০-১২০ সেকেন্ড লাগে।</div>
+      <textarea class="finp" id="vp" placeholder="ভিডিওর বর্ণনা দিন..." rows="4"></textarea>
+      <select class="finp" id="vm">
+        <option value="animatediff">&#127916; AnimateDiff (HuggingFace)</option>
+        <option value="modelscope">&#127909; ModelScope</option>
+        <option value="cogvideo">&#11088; CogVideoX-5B</option>
+        <option value="ltx">&#10024; LTX Video</option>
+        <option value="wan">&#127916; WanVideo</option>
+        <option value="zeroscope">&#127916; ZeroScope</option>
+      </select>
+      <button class="gbtn" id="vbtn" onclick="genVideo()">&#127916; ভিডিও তৈরি করুন</button>
+    </div>
+    <div id="vres" style="display:none;text-align:center;padding:20px">
+      <video id="vout" controls style="width:100%;border-radius:12px;margin-bottom:10px"></video>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSLATE SCREEN -->
+<div class="fs" id="fs-translate">
+  <div class="fs-head">
+    <button class="fs-back" onclick="closeFS('translate')">&#8592;</button>
+    <div class="fs-title">&#128483; অনুবাদ</div>
+  </div>
+  <div class="fs-body">
+    <div class="fsec">
+      <select class="finp" id="tl">
+        <option value="en">&#127760; English থেকে বাংলা</option>
+        <option value="bn2en">&#127991; বাংলা থেকে English</option>
+        <option value="ar">&#127465;&#127486; Arabic থেকে বাংলা</option>
+        <option value="hi">&#127470;&#127475; Hindi থেকে বাংলা</option>
+        <option value="fr">&#127467;&#127479; French থেকে বাংলা</option>
+        <option value="custom">&#127760; যেকোনো ভাষা</option>
+      </select>
+      <textarea class="finp" id="ti" placeholder="যে text অনুবাদ করতে চান..." rows="5"></textarea>
+      <button class="gbtn" onclick="doTranslate()">&#128483; অনুবাদ করুন</button>
+    </div>
+    <div class="fsec" id="tres" style="display:none">
+      <div class="fst">অনুবাদ</div>
+      <div id="tout" style="font-size:14px;line-height:1.8;color:var(--txt)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WRITE SCREEN -->
+<div class="fs" id="fs-write">
+  <div class="fs-head">
+    <button class="fs-back" onclick="closeFS('write')">&#8592;</button>
+    <div class="fs-title">&#9997; Writing AI</div>
+  </div>
+  <div class="fs-body">
+    <div class="fsec">
+      <select class="finp" id="wt">
+        <option value="blog">&#128203; Blog Post</option>
+        <option value="cv">&#128196; CV / Resume</option>
+        <option value="email">&#128140; Email</option>
+        <option value="story">&#128214; Story</option>
+        <option value="poem">&#128221; Poem / কবিতা</option>
+        <option value="letter">&#9993; চিঠি</option>
+        <option value="social">&#128241; Social Media Post</option>
+        <option value="product">&#128722; Product Description</option>
+      </select>
+      <textarea class="finp" id="wi" placeholder="বিষয় বা বিস্তারিত বর্ণনা দিন..." rows="5"></textarea>
+      <button class="gbtn" onclick="doWrite()">&#9997; লেখা তৈরি করুন</button>
+    </div>
+    <div class="fsec" id="wres" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="fst" style="margin-bottom:0">Output</div>
+        <button onclick="cpWrite()" style="padding:5px 12px;background:#fdf0e8;border:1px solid #f0c9a8;border-radius:8px;font-size:11px;color:var(--acc);cursor:pointer;font-family:var(--font)">&#128203; কপি</button>
+      </div>
+      <div id="wout" style="font-size:14px;line-height:1.85;color:var(--txt)"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://103.7.4.121:3000';
+
+const ChatEngine = {
+  send: async (msg) => {
+    try {
+      const r = await fetch(API + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const d = await r.json();
+      if (d.reply && d.reply.length > 2) return d.reply;
+      throw new Error('empty');
+    } catch(e) {
+      // Fallback to Pollinations directly
+      try {
+        const r = await fetch('https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&seed=' + (Math.random()*9999|0));
+        const t = await r.text();
+        if (t && t.length > 5) return t;
+      } catch {}
+      return 'দুঃখিত, সংযোগ সমস্যা হচ্ছে। একটু পরে চেষ্টা করুন।';
+    }
+  },
+  check: async () => {}
+};
+
+const ImageEngine = {
+  generate: async (prompt, style = 'flux', w = 512, h = 512) => {
+    try {
+      const r = await fetch(API + '/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, style, width: w, height: h })
+      });
+      const d = await r.json();
+      if (d.urls && d.urls.length > 0) return d.urls;
+    } catch {}
+    // Fallback — direct Pollinations
+    const seed = Math.random()*9999|0;
+    return [
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=flux&nologo=true&seed=${seed}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=flux-realism&nologo=true&seed=${seed+1}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=turbo&nologo=true&seed=${seed+2}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=flux-anime&nologo=true&seed=${seed+3}`,
+    ];
+  },
+  check: async () => {}
+};
+
+const VideoEngine = {
+  generate: async (prompt, model = 'animatediff') => {
+    try {
+      const models = {
+        animatediff: 'https://guoyww-animatediff.hf.space/api/predict',
+        modelscope: 'https://damo-vilab-modelscope-text-to-video-synthesis.hf.space/api/predict',
+        zeroscope: 'https://hysts-zeroscope-v2.hf.space/api/predict',
+      };
+      const endpoint = models[model] || models.animatediff;
+      const r = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: [prompt] })
+      });
+      const d = await r.json();
+      return d.data?.[0]?.url || d.data?.[0] || null;
+    } catch { return null; }
+  }
+};
+
+const VoiceEngine = {
+  speak: async (text) => {
+    try {
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'bn-BD';
+        u.rate = 0.9;
+        window.speechSynthesis.speak(u);
+        return;
+      }
+    } catch {}
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.slice(0,200))}&tl=bn&client=tw-ob`;
+      const audio = new Audio(url);
+      audio.play();
+    } catch {}
+  }
+};
+
+const CodeEngine = {
+  generate: async (type, desc) => {
+    const prompts = {
+      wp_theme: `তুমি একজন expert WordPress developer। নিচের বর্ণনা অনুযায়ী WordPress theme তৈরি করো।
+
+Theme বর্ণনা: ${desc}`,
+      wp_plugin: `তুমি একজন expert WordPress developer। নিচের বর্ণনা অনুযায়ী WordPress plugin তৈরি করো।
+
+Plugin বর্ণনা: ${desc}`,
+      php: `তুমি একজন expert PHP developer। নিচের বর্ণনা অনুযায়ী PHP code লেখো।
+
+Code বর্ণনা: ${desc}`,
+      python: `তুমি একজন expert Python developer। নিচের বর্ণনা অনুযায়ী Python code লেখো।
+
+Code বর্ণনা: ${desc}`,
+      javascript: `তুমি একজন expert JavaScript developer। নিচের বর্ণনা অনুযায়ী JavaScript code লেখো।
+
+Code বর্ণনা: ${desc}`,
+      react: `তুমি একজন expert React developer। নিচের বর্ণনা অনুযায়ী React component তৈরি করো।
+
+Component বর্ণনা: ${desc}`,
+      flutter: `তুমি একজন expert Flutter developer। নিচের বর্ণনা অনুযায়ী Flutter widget তৈরি করো।
+
+Widget বর্ণনা: ${desc}`,
+      android: `তুমি একজন expert Android/Kotlin developer। নিচের বর্ণনা অনুযায়ী Android code লেখো।
+
+Code বর্ণনা: ${desc}`,
+      sql: `তুমি একজন expert SQL developer। নিচের বর্ণনা অনুযায়ী SQL query লেখো।
+
+Query বর্ণনা: ${desc}`,
+      api: `তুমি একজন expert API developer। নিচের বর্ণনা অনুযায়ী REST API তৈরি করো।
+
+API বর্ণনা: ${desc}`,
+      html_css: `তুমি একজন expert HTML/CSS developer। নিচের বর্ণনা অনুযায়ী HTML/CSS code লেখো।
+
+Code বর্ণনা: ${desc}`,
+    };
+    return await ChatEngine.send(prompts[type] || `Code লেখো: ${desc}`);
+  }
+};
+
+// BDAi — No license, open for all
+
+// ── LOADING ────────────────────────────────────────────────────────
+function startLoading() {
+  const fill = document.getElementById('lf');
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct += Math.random() * 20;
+    if (pct > 90) pct = 90;
+    fill.style.width = pct + '%';
+  }, 150);
+  setTimeout(() => {
+    clearInterval(iv);
+    fill.style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+    }, 300);
+  }, 1500);
+}
+window.addEventListener('load', startLoading);
+
+// ── NAVIGATION ─────────────────────────────────────────────────────
+let pOpen = false;
+
+function toggleP() {
+  pOpen = !pOpen;
+  document.getElementById('pmenu').classList.toggle('open', pOpen);
+  document.getElementById('pbtn').classList.toggle('on', pOpen);
+}
+function closeP() {
+  pOpen = false;
+  document.getElementById('pmenu').classList.remove('open');
+  document.getElementById('pbtn').classList.remove('on');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#pmenu') && !e.target.closest('#pbtn')) closeP();
+});
+function openFS(id) { closeP(); document.getElementById('fs-' + id).classList.add('open'); }
+function closeFS(id) { document.getElementById('fs-' + id).classList.remove('open'); }
+function autoH(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 130) + 'px'; }
+function showHistory() { showToast('Chat history আসছে...'); }
+
+// ── TOAST ──────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── CHAT ───────────────────────────────────────────────────────────
+let busy = false, hist = [];
+
+function newChat() {
+  if (busy) return;
+  document.getElementById('msgs').innerHTML = '';
+  document.getElementById('wlc').style.display = '';
+  hist = [];
+  const ci = document.getElementById('ci');
+  ci.value = ''; ci.style.height = 'auto'; ci.focus();
+}
+
+function scrollD() { document.getElementById('chat').scrollTop = 99999; }
+
+function fmtMsg(t) {
+  return t
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre>$1</pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^#{1,3} (.*)/gm, '<h3>$1</h3>')
+    .replace(/^[*\-] (.*)/gm, '<li>$1</li>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+}
+
+async function streamTxt(el, html) {
+  if (html.includes('<pre>') || html.length > 600) {
+    el.innerHTML = '<p>' + html + '</p>';
+    return;
+  }
+  const words = html.split(' ');
+  el.innerHTML = '';
+  for (let i = 0; i < words.length; i++) {
+    el.innerHTML = '<p>' + words.slice(0, i + 1).join(' ') + '<span class="cursor"></span></p>';
+    scrollD();
+    await new Promise(r => setTimeout(r, 20));
+  }
+  el.innerHTML = '<p>' + html + '</p>';
+}
+
+function spkBtn(btn) {
+  const t = btn.closest('.ma-body').querySelector('.ma-txt')?.innerText || '';
+  if (t) VoiceEngine.speak(t.slice(0, 400));
+}
+function cpyBtn(btn) {
+  const t = btn.closest('.ma-body').querySelector('.ma-txt')?.innerText || '';
+  if (Native && Native.copy) Native.copy(t);
+  else navigator.clipboard?.writeText(t);
+  showToast('কপি হয়েছে!');
+}
+
+async function send() {
+  if (busy) return;
+  const ci = document.getElementById('ci');
+  const msg = ci.value.trim();
+  if (!msg) return;
+  ci.value = ''; ci.style.height = 'auto'; closeP();
+  document.getElementById('wlc').style.display = 'none';
+  const msgsEl = document.getElementById('msgs');
+
+  const ud = document.createElement('div');
+  ud.className = 'mu';
+  ud.innerHTML = '<div class="mu-bub">' + msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>') + '</div>';
+  msgsEl.appendChild(ud); scrollD();
+  hist.push({ role: 'user', content: msg });
+
+  busy = true;
+  document.getElementById('sbtn').disabled = true;
+
+  const ad = document.createElement('div');
+  ad.className = 'ma';
+  const rid = 'r' + Date.now();
+  ad.innerHTML =
+    '<div class="ma-av"><img src="logo.png" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span style=font-size:16px;font-weight:900;color:#fff;font-family:serif>B</span>\'"></div>' +
+    '<div class="ma-body">' +
+      '<div class="ma-name">BDAi</div>' +
+      '<div class="ma-txt" id="' + rid + '"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>' +
+      '<div class="ma-acts" id="ac-' + rid + '">' +
+        '<button class="act" onclick="spkBtn(this)">&#128266;</button>' +
+        '<button class="act" onclick="cpyBtn(this)">&#128203;</button>' +
+        '<button class="act" onclick="this.textContent=\'&#128077;\';this.style.color=\'var(--acc)\'">&#128077;</button>' +
+      '</div>' +
+    '</div>';
+  msgsEl.appendChild(ad); scrollD();
+
+  const rEl = document.getElementById(rid);
+  const aEl = document.getElementById('ac-' + rid);
+
+  try {
+    const reply = await ChatEngine.send(msg);
+    await streamTxt(rEl, fmtMsg(reply));
+    hist.push({ role: 'assistant', content: reply });
+    aEl.classList.add('show');
+  } catch (e) {
+    rEl.innerHTML = '<span style="color:var(--red)">সংযোগ সমস্যা। আবার চেষ্টা করুন।</span>';
+  }
+
+  busy = false;
+  document.getElementById('sbtn').disabled = false;
+  ci.focus(); scrollD();
+}
+
+// ── IMAGE ──────────────────────────────────────────────────────────
+async function genImg() {
+  const p = document.getElementById('ip').value.trim();
+  if (!p) { showToast('বর্ণনা লিখুন'); return; }
+  const btn = document.getElementById('ibtn');
+  btn.disabled = true; btn.textContent = 'তৈরি হচ্ছে...';
+  const [w, h] = document.getElementById('isz').value.split(',');
+  const s = document.getElementById('is').value;
+  const g = document.getElementById('ig');
+  g.innerHTML = Array(4).fill('<div class="ic"><div class="ldots"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div></div>').join('');
+  try {
+    const urls = await ImageEngine.generate(p, s, parseInt(w), parseInt(h));
+    g.innerHTML = '';
+    urls.slice(0, 4).forEach(url => {
+      const c = document.createElement('div'); c.className = 'ic';
+      c.innerHTML = '<img src="' + url + '" loading="lazy" onerror="this.parentElement.innerHTML=\'&#10060;\'">';
+      c.onclick = () => window.open(url, '_blank');
+      g.appendChild(c);
+    });
+    while (g.children.length < 4) {
+      const c = document.createElement('div'); c.className = 'ic'; c.textContent = '🎨'; g.appendChild(c);
+    }
+    showToast('ছবি তৈরি হয়েছে!');
+  } catch (e) { showToast('ছবি তৈরি হয়নি'); }
+  btn.disabled = false; btn.textContent = '🎨 ৪টি ছবি তৈরি করুন';
+}
+
+// ── CODE ───────────────────────────────────────────────────────────
+async function genCode() {
+  const p = document.getElementById('cp').value.trim();
+  const t = document.getElementById('ct').value;
+  if (!p) { showToast('বর্ণনা দিন'); return; }
+  const btn = document.getElementById('cbtn');
+  btn.disabled = true; btn.textContent = 'তৈরি হচ্ছে...';
+  try {
+    const r = await CodeEngine.generate(t, p);
+    document.getElementById('co').textContent = r;
+    document.getElementById('cr').style.display = 'block';
+    showToast('কোড তৈরি হয়েছে!');
+  } catch (e) { showToast('কোড তৈরি হয়নি'); }
+  btn.disabled = false; btn.textContent = '⚡ কোড তৈরি করুন';
+}
+function cpCode() {
+  const t = document.getElementById('co').textContent;
+  if (Native && Native.copy) Native.copy(t);
+  else navigator.clipboard?.writeText(t);
+  showToast('কোড কপি হয়েছে!');
+}
+
+// ── VIDEO ──────────────────────────────────────────────────────────
+async function genVideo() {
+  const p = document.getElementById('vp').value.trim();
+  if (!p) { showToast('বর্ণনা দিন'); return; }
+  const btn = document.getElementById('vbtn');
+  const m = document.getElementById('vm').value;
+  btn.disabled = true; btn.textContent = 'তৈরি হচ্ছে...';
+  try {
+    const url = await VideoEngine.generate(p, m);
+    if (url) {
+      document.getElementById('vout').src = url;
+      document.getElementById('vres').style.display = 'block';
+      showToast('ভিডিও তৈরি হয়েছে!');
+    } else { showToast('ভিডিও তৈরি হয়নি'); }
+  } catch (e) { showToast('ভিডিও তৈরি হয়নি'); }
+  btn.disabled = false; btn.textContent = '🎬 ভিডিও তৈরি করুন';
+}
+
+// ── TRANSLATE ──────────────────────────────────────────────────────
+async function doTranslate() {
+  const text = document.getElementById('ti').value.trim();
+  const lang = document.getElementById('tl').value;
+  if (!text) { showToast('Text দিন'); return; }
+  const prompts = {
+    en: 'Translate to Bangla: ' + text,
+    bn2en: 'Translate to English: ' + text,
+    ar: 'Translate this Arabic to Bangla: ' + text,
+    hi: 'Translate this Hindi to Bangla: ' + text,
+    fr: 'Translate this French to Bangla: ' + text,
+    custom: 'Translate to Bangla: ' + text,
+  };
+  document.getElementById('tout').textContent = 'অনুবাদ হচ্ছে...';
+  document.getElementById('tres').style.display = 'block';
+  try {
+    const r = await ChatEngine.send(prompts[lang] || prompts.en);
+    document.getElementById('tout').innerHTML = r.replace(/\n/g, '<br>');
+  } catch (e) { document.getElementById('tout').textContent = 'অনুবাদ হয়নি।'; }
+}
+
+// ── WRITING ────────────────────────────────────────────────────────
+async function doWrite() {
+  const topic = document.getElementById('wi').value.trim();
+  const type = document.getElementById('wt').value;
+  if (!topic) { showToast('বিষয় দিন'); return; }
+  const prompts = {
+    blog: 'একটি সুন্দর বাংলা blog post লেখো এই বিষয়ে: ' + topic,
+    cv: 'একটি professional CV/Resume তৈরি করো: ' + topic,
+    email: 'একটি professional email লেখো: ' + topic,
+    story: 'একটি সুন্দর গল্প লেখো: ' + topic,
+    poem: 'একটি সুন্দর বাংলা কবিতা লেখো: ' + topic,
+    letter: 'একটি সুন্দর চিঠি লেখো: ' + topic,
+    social: 'একটি engaging social media post লেখো: ' + topic,
+    product: 'একটি compelling product description লেখো: ' + topic,
+  };
+  document.getElementById('wout').textContent = 'লেখা তৈরি হচ্ছে...';
+  document.getElementById('wres').style.display = 'block';
+  try {
+    const r = await ChatEngine.send(prompts[type] || prompts.blog);
+    document.getElementById('wout').innerHTML = fmtMsg(r);
+  } catch (e) { document.getElementById('wout').textContent = 'লেখা তৈরি হয়নি।'; }
+}
+function cpWrite() {
+  const t = document.getElementById('wout').innerText;
+  if (Native && Native.copy) Native.copy(t);
+  else navigator.clipboard?.writeText(t);
+  showToast('কপি হয়েছে!');
+}
+
+// ── VOICE ──────────────────────────────────────────────────────────
+function startVoice() {
+  closeP();
+  if (Native && Native.requestPermission) Native.requestPermission('audio');
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = 'bn-BD';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onstart = () => showToast('কথা বলুন...');
+    rec.onresult = e => {
+      const t = e.results[0][0].transcript;
+      document.getElementById('ci').value = t;
+      showToast('✅ ' + t.slice(0, 30));
+    };
+    rec.onerror = () => showToast('Voice error। আবার চেষ্টা করুন।');
+    rec.start();
+  } else { showToast('Voice supported নয়।'); }
+}
+
+function pickFile() {
+  closeP();
+  showToast('ফাইল feature আসছে...');
+}
+
+// ── NATIVE BRIDGE FALLBACK ─────────────────────────────────────────
+if (typeof Native === 'undefined') {
+  window.Native = { copy: t => navigator.clipboard?.writeText(t), share: t => {}, vibrate: ms => {}, requestPermission: t => {}, hasPermission: t => false, version: () => '1.0.0', deviceId: () => 'web' };
+}
+
+// ── PERMISSION CALLBACKS ───────────────────────────────────────────
+window._permDenied = type => showToast(type + ' permission দেননি।');
+window._onBack = () => {
+  const open = document.querySelector('.fs.open');
+  if (open) { open.classList.remove('open'); return; }
+  if (pOpen) { closeP(); return; }
+};
+</script>
+</body>
+</html>
