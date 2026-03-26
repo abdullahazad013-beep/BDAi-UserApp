@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,25 +31,26 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Set date
         run: echo "DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/*.apk app/build/outputs/apk/release/BDAi-${{ env.DATE }}.apk
+        run: mv app/build/outputs/apk/debug/*.apk app/build/outputs/apk/debug/BDAi-${{ env.DATE }}.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: BDAi-${{ env.DATE }}
-          path: app/build/outputs/apk/release/BDAi-*.apk
+          path: app/build/outputs/apk/debug/BDAi-*.apk
           retention-days: 30
 
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.DATE }}
           name: BDAi App v${{ env.DATE }}
-          files: app/build/outputs/apk/release/BDAi-*.apk
+          files: app/build/outputs/apk/debug/BDAi-*.apk
           body: "BDAi By Azad | v${{ env.DATE }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
