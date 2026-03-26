@@ -35,8 +35,7 @@ jobs:
         run: echo "DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/BDAi-${{ env.DATE }}.apk
-
+        run: mv app/build/outputs/apk/release/*.apk app/build/outputs/apk/release/BDAi-${{ env.DATE }}.apk
       - uses: actions/upload-artifact@v4
         with:
           name: BDAi-${{ env.DATE }}
